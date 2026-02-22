@@ -34,6 +34,11 @@ src/
 └── server.ts                # Entry point + graceful shutdown
 ```
 
+## Architecture Diagram
+
+A visual diagram of the layer architecture, request flow and data models is available here:
+![Architecture](docs/architecture.png)
+
 ### Technical Choices
 
 | Layer         | Choice                                   | Reason                               |
