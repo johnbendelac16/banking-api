@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Banking API — Architecture Diagram</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #f0f4f8;
+        font-family: 'Inter', sans-serif;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 40px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .diagram-wrapper {
+        max-width: 960px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 40px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      .section-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        margin-bottom: 20px;
+      }
+
+      .sep {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin-bottom: 32px;
+      }
+
+      /* ══ LAYER STACK ══ */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 48px;
+      }
+
+      .stack-box {
+        width: 700px;
+        border-radius: 6px;
+        border: 1.5px solid;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .stack-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .stack-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .stack-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .stack-desc {
+        font-size: 0.73rem;
+        color: #64748b;
+        margin-top: 2px;
+      }
+
+      .stack-files {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .stack-file {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.62rem;
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid;
+      }
+
+      .stack-arrow {
+        width: 700px;
+        display: flex;
+        justify-content: center;
+        padding: 4px 0;
+        position: relative;
+      }
+      .stack-arrow::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1.5px;
+        background: #cbd5e1;
+        transform: translateX(-50%);
+      }
+      .stack-arrow svg {
+        background: #fff;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Colors */
+      .c-client {
+        border-color: #94a3b8;
+        background: #f8fafc;
+      }
+      .c-client .stack-icon {
+        background: #e2e8f0;
+      }
+      .c-client .stack-file {
+        color: #64748b;
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+      }
+
+      .c-router {
+        border-color: #f59e0b;
+        background: #fffbeb;
+      }
+      .c-router .stack-icon {
+        background: #fef3c7;
+      }
+      .c-router .stack-file {
+        color: #d97706;
+        border-color: #fde68a;
+        background: #fef9ee;
+      }
+
+      .c-middle {
+        border-color: #8b5cf6;
+        background: #faf5ff;
+      }
+      .c-middle .stack-icon {
+        background: #ede9fe;
+      }
+      .c-middle .stack-file {
+        color: #7c3aed;
+        border-color: #ddd6fe;
+        background: #f5f3ff;
+      }
+
+      .c-ctrl {
+        border-color: #3b82f6;
+        background: #eff6ff;
+      }
+      .c-ctrl .stack-icon {
+        background: #dbeafe;
+      }
+      .c-ctrl .stack-file {
+        color: #2563eb;
+        border-color: #bfdbfe;
+        background: #eff6ff;
+      }
+
+      .c-service {
+        border-color: #10b981;
+        background: #f0fdf4;
+      }
+      .c-service .stack-icon {
+        background: #d1fae5;
+      }
+      .c-service .stack-file {
+        color: #059669;
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+      }
+
+      .c-models {
+        border-color: #ec4899;
+        background: #fdf2f8;
+      }
+      .c-models .stack-icon {
+        background: #fce7f3;
+      }
+      .c-models .stack-file {
+        color: #db2777;
+        border-color: #fbcfe8;
+        background: #fdf2f8;
+      }
+
+      .c-db {
+        border-color: #14b8a6;
+        background: #f0fdfa;
+      }
+      .c-db .stack-icon {
+        background: #ccfbf1;
+      }
+      .c-db .stack-file {
+        color: #0d9488;
+        border-color: #99f6e4;
+        background: #f0fdfa;
+      }
+
+      /* ══ REQUEST FLOW ══ */
+      .flow-container {
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        margin-bottom: 48px;
+      }
+
+      .flow-step {
+        flex: 1;
+        min-width: 120px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        background: #f8fafc;
+        padding: 14px 10px;
+        text-align: center;
+      }
+
+      .flow-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #1e293b;
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+      }
+
+      .flow-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 6px;
+      }
+
+      .flow-body {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.6rem;
+        color: #64748b;
+        line-height: 1.7;
+      }
+
+      .flow-connector {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 2px;
+        padding-top: 30px;
+        flex-shrink: 0;
+      }
+
+      .fc-line {
+        width: 18px;
+        height: 1.5px;
+        background: #cbd5e1;
+      }
+      .fc-arrow {
+        width: 0;
+        height: 0;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        border-left: 6px solid #cbd5e1;
+      }
+      .fc-label {
+        font-size: 0.55rem;
+        color: #94a3b8;
+        margin-top: 4px;
+        white-space: nowrap;
+      }
+
+      /* ══ DATA MODELS ══ */
+      .models-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .model-card {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .model-header {
+        padding: 10px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #fff;
+      }
+
+      .model-field {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.67rem;
+      }
+      .model-field:last-child {
+        border-bottom: none;
+      }
+
+      .pk {
+        color: #f59e0b;
+        font-weight: 700;
+      }
+      .fk {
+        color: #3b82f6;
+      }
+      .ft {
+        color: #94a3b8;
+      }
+
+      .m-person .model-header {
+        background: #ec4899;
+      }
+      .m-account .model-header {
+        background: #3b82f6;
+      }
+      .m-tx .model-header {
+        background: #10b981;
+      }
+
+      .relations {
+        display: flex;
+        justify-content: center;
+        gap: 48px;
+        margin-top: 14px;
+      }
+
+      .rel {
+        font-size: 0.68rem;
+        color: #94a3b8;
+        font-family: 'JetBrains Mono', monospace;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .rel-line {
+        width: 28px;
+        height: 1px;
+        background: #cbd5e1;
+        position: relative;
+      }
+      .rel-line::after {
+        content: '';
+        position: absolute;
+        right: -1px;
+        top: -3px;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        border-left: 5px solid #cbd5e1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏦 Banking API — Architecture Diagram</h1>
+    <p class="subtitle">TypeScript · Node.js · Express · MongoDB</p>
+
+    <div class="diagram-wrapper">
+      <!-- ══ 1. LAYERS ══ -->
+      <p class="section-label">1 — Layer Architecture</p>
+      <div class="stack">
+        <div class="stack-box c-client">
+          <div class="stack-left">
+            <div class="stack-icon">🌐</div>
+            <div>
+              <div class="stack-name">Client</div>
+              <div class="stack-desc">HTTP consumer — curl / Postman / any frontend</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-router">
+          <div class="stack-left">
+            <div class="stack-icon">🗺️</div>
+            <div>
+              <div class="stack-name">Router</div>
+              <div class="stack-desc">Maps HTTP method + URL to the right controller handler</div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">account.routes.ts</span>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-middle">
+          <div class="stack-left">
+            <div class="stack-icon">🛡️</div>
+            <div>
+              <div class="stack-name">Middlewares</div>
+              <div class="stack-desc">
+                Input validation · Rate limiter · Helmet · CORS · Error handler
+              </div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">validation.middleware.ts</span>
+            <span class="stack-file">error.middleware.ts</span>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-ctrl">
+          <div class="stack-left">
+            <div class="stack-icon">🎮</div>
+            <div>
+              <div class="stack-name">Controller</div>
+              <div class="stack-desc">
+                Parses request · Calls service · Returns formatted JSON response
+              </div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">account.controller.ts</span>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-service">
+          <div class="stack-left">
+            <div class="stack-icon">⚙️</div>
+            <div>
+              <div class="stack-name">Service</div>
+              <div class="stack-desc">
+                All banking rules — balance check · daily limit · block validation
+              </div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">account.service.ts</span>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-models">
+          <div class="stack-left">
+            <div class="stack-icon">📋</div>
+            <div>
+              <div class="stack-name">Models</div>
+              <div class="stack-desc">
+                Mongoose schemas — data structure and database interaction
+              </div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">Account.ts</span>
+            <span class="stack-file">Person.ts</span>
+            <span class="stack-file">Transaction.ts</span>
+          </div>
+        </div>
+
+        <div class="stack-arrow">
+          <svg width="12" height="16" viewBox="0 0 12 16">
+            <path
+              d="M6 0v10M1 9l5 6 5-6"
+              stroke="#94a3b8"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <div class="stack-box c-db">
+          <div class="stack-left">
+            <div class="stack-icon">🗄️</div>
+            <div>
+              <div class="stack-name">MongoDB</div>
+              <div class="stack-desc">Persistent storage · auto-reconnect on disconnect</div>
+            </div>
+          </div>
+          <div class="stack-files">
+            <span class="stack-file">database.ts</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="sep" />
+
+      <!-- ══ 2. REQUEST FLOW ══ -->
+      <p class="section-label">2 — Request Flow &nbsp;·&nbsp; POST /api/accounts/:id/withdraw</p>
+      <div class="flow-container">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-title">Client</div>
+          <div class="flow-body">POST /accounts/1/withdraw<br />{ "value": 150 }</div>
+        </div>
+        <div class="flow-connector">
+          <div style="display: flex; align-items: center">
+            <div class="fc-line"></div>
+            <div class="fc-arrow"></div>
+          </div>
+          <div class="fc-label">HTTP</div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-title">Validation</div>
+          <div class="flow-body">value &gt; 0 ?<br />→ 422 if invalid</div>
+        </div>
+        <div class="flow-connector">
+          <div style="display: flex; align-items: center">
+            <div class="fc-line"></div>
+            <div class="fc-arrow"></div>
+          </div>
+          <div class="fc-label">valid</div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-title">Controller</div>
+          <div class="flow-body">parse accountId<br />call service<br />.withdraw(1, 150)</div>
+        </div>
+        <div class="flow-connector">
+          <div style="display: flex; align-items: center">
+            <div class="fc-line"></div>
+            <div class="fc-arrow"></div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-title">Service</div>
+          <div class="flow-body">account active?<br />balance ≥ 150?<br />daily limit ok?</div>
+        </div>
+        <div class="flow-connector">
+          <div style="display: flex; align-items: center">
+            <div class="fc-line"></div>
+            <div class="fc-arrow"></div>
+          </div>
+          <div class="fc-label">ok</div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-title">Database</div>
+          <div class="flow-body">balance -= 150<br />save Transaction<br />record</div>
+        </div>
+        <div class="flow-connector">
+          <div style="display: flex; align-items: center">
+            <div class="fc-line"></div>
+            <div class="fc-arrow"></div>
+          </div>
+          <div class="fc-label">saved</div>
+        </div>
+
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-title">Response</div>
+          <div class="flow-body">200 OK<br />{ success: true,<br />newBalance: 850 }</div>
+        </div>
+      </div>
+
+      <hr class="sep" />
+
+      <!-- ══ 3. DATA MODELS ══ -->
+      <p class="section-label">3 — Data Models</p>
+      <div class="models-grid">
+        <div class="model-card m-person">
+          <div class="model-header">persons</div>
+          <div class="model-field">
+            <span class="pk">personId</span><span class="ft">Number · PK</span>
+          </div>
+          <div class="model-field"><span>name</span><span class="ft">String</span></div>
+          <div class="model-field">
+            <span>document</span><span class="ft">String · unique</span>
+          </div>
+          <div class="model-field"><span>birthDate</span><span class="ft">Date</span></div>
+        </div>
+
+        <div class="model-card m-account">
+          <div class="model-header">accounts</div>
+          <div class="model-field">
+            <span class="pk">accountId</span><span class="ft">Number · PK</span>
+          </div>
+          <div class="model-field">
+            <span class="fk">personId</span><span class="ft">Number · FK</span>
+          </div>
+          <div class="model-field"><span>balance</span><span class="ft">Number</span></div>
+          <div class="model-field">
+            <span>dailyWithdrawalLimit</span><span class="ft">Number</span>
+          </div>
+          <div class="model-field"><span>activeFlag</span><span class="ft">Boolean</span></div>
+          <div class="model-field"><span>accountType</span><span class="ft">Number</span></div>
+          <div class="model-field"><span>createDate</span><span class="ft">Date</span></div>
+        </div>
+
+        <div class="model-card m-tx">
+          <div class="model-header">transactions</div>
+          <div class="model-field">
+            <span class="pk">transactionId</span><span class="ft">Number · PK</span>
+          </div>
+          <div class="model-field">
+            <span class="fk">accountId</span><span class="ft">Number · FK</span>
+          </div>
+          <div class="model-field"><span>value</span><span class="ft">Number</span></div>
+          <div class="model-field">
+            <span>type</span><span class="ft">DEPOSIT | WITHDRAWAL</span>
+          </div>
+          <div class="model-field"><span>transactionDate</span><span class="ft">Date</span></div>
+        </div>
+      </div>
+
+      <div class="relations">
+        <div class="rel">
+          persons
+          <div class="rel-line"></div>
+          accounts &nbsp;·&nbsp; personId
+        </div>
+        <div class="rel">
+          accounts
+          <div class="rel-line"></div>
+          transactions &nbsp;·&nbsp; accountId
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
