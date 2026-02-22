@@ -83,7 +83,7 @@ npm install
 cp .env.example .env
 ```
 
-`.env` content:
+`.env.example` content:
 
 ```env
 NODE_ENV=development
@@ -413,3 +413,9 @@ mongod --dbpath ~/data/db --replSet rs0
 # then once only:
 mongosh --eval "rs.initiate()"
 ```
+
+## 🔮 Possible Improvements
+
+- JWT authentication to verify account ownership
+- HTTPS support
+- Docker setup for easier deployment

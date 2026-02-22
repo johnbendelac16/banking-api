@@ -198,4 +198,74 @@ describe('GET /api/accounts/:accountId/statement', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.transactions.length).toBe(1);
   });
+
+  describe('Operations on blocked account', () => {
+    let accountId: number;
+
+    beforeEach(async () => {
+      const res = await request(app).post('/api/accounts').send({
+        personId: 1,
+        dailyWithdrawalLimit: 500,
+        accountType: AccountType.CHECKING,
+        initialBalance: 1000,
+      });
+      accountId = res.body.data.accountId;
+      await request(app).patch(`/api/accounts/${accountId}/block`);
+    });
+
+    it('should reject deposit on blocked account', async () => {
+      const res = await request(app)
+        .post(`/api/accounts/${accountId}/deposit`)
+        .send({ value: 100 });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('blocked');
+    });
+
+    it('should reject withdrawal on blocked account', async () => {
+      const res = await request(app)
+        .post(`/api/accounts/${accountId}/withdraw`)
+        .send({ value: 100 });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('blocked');
+    });
+
+    it('should reject blocking an already blocked account', async () => {
+      const res = await request(app).patch(`/api/accounts/${accountId}/block`);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('already blocked');
+    });
+  });
+
+  describe('Invalid inputs', () => {
+    it('should return 400 for non-numeric accountId', async () => {
+      const res = await request(app).get('/api/accounts/abc/balance');
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 for unknown route', async () => {
+      const res = await request(app).get('/api/unknown');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('Daily limit cumulative', () => {
+    it('should reject second withdrawal that cumulatively exceeds daily limit', async () => {
+      const res = await request(app).post('/api/accounts').send({
+        personId: 1,
+        dailyWithdrawalLimit: 500,
+        accountType: AccountType.CHECKING,
+        initialBalance: 1000,
+      });
+      const accountId = res.body.data.accountId;
+
+      await request(app).post(`/api/accounts/${accountId}/withdraw`).send({ value: 300 });
+
+      const res2 = await request(app)
+        .post(`/api/accounts/${accountId}/withdraw`)
+        .send({ value: 250 });
+
+      expect(res2.status).toBe(400);
+      expect(res2.body.message).toContain('Daily withdrawal limit exceeded');
+    });
+  });
 });

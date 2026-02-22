@@ -207,4 +207,48 @@ describe('AccountService', () => {
       expect(statement.transactions.length).toBe(1);
     });
   });
+  describe('withdraw - edge cases', () => {
+    let accountId: number;
+
+    beforeEach(async () => {
+      const acc = await accountService.createAccount({
+        personId: 1,
+        dailyWithdrawalLimit: 1000,
+        accountType: AccountType.CHECKING,
+        initialBalance: 1000,
+      });
+      accountId = acc.accountId;
+    });
+
+    it('should allow withdrawal of exact balance amount', async () => {
+      const account = await accountService.withdraw(accountId, 1000);
+      expect(account.balance).toBe(0);
+    });
+
+    it('should reject two withdrawals that together exceed daily limit', async () => {
+      const acc = await accountService.createAccount({
+        personId: 1,
+        dailyWithdrawalLimit: 500, // ← limite à 500
+        accountType: AccountType.CHECKING,
+        initialBalance: 1000,
+      });
+      await accountService.withdraw(acc.accountId, 300);
+      await expect(accountService.withdraw(acc.accountId, 250)).rejects.toThrow(
+        'Daily withdrawal limit exceeded'
+      );
+    });
+  });
+
+  describe('getStatement - edge cases', () => {
+    it('should return empty transactions for account with no activity', async () => {
+      const acc = await accountService.createAccount({
+        personId: 1,
+        dailyWithdrawalLimit: 500,
+        accountType: AccountType.CHECKING,
+      });
+      const statement = await accountService.getStatement(acc.accountId, {});
+      expect(statement.transactions).toHaveLength(0);
+      expect(statement.pagination.total).toBe(0);
+    });
+  });
 });
